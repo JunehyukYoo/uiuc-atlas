@@ -48,7 +48,7 @@ model Submission {
   latitude        Decimal           @db.Decimal(9, 6)
   longitude       Decimal           @db.Decimal(9, 6)
   emotion         Emotion
-  intensity       Int?
+  intensity       Int
   reflection      String?           @db.VarChar(280)
 
   status          SubmissionStatus  @default(VISIBLE)
@@ -57,8 +57,8 @@ model Submission {
   tagId           String?
   tag             Tag?              @relation(fields: [tagId], references: [id])
 
-  deviceSessionId String?
-  deviceSession   DeviceSession?    @relation(fields: [deviceSessionId], references: [id])
+  deviceSessionId String
+  deviceSession   DeviceSession    @relation(fields: [deviceSessionId], references: [id])
 
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
