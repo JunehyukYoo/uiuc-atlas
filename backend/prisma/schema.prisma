@@ -11,3 +11,61 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Emotion {
+  CALM
+  STRESSED
+  INSPIRED
+  LONELY
+  FRUSTRATED
+  ENERGIZED
+}
+
+enum SubmissionStatus {
+  VISIBLE
+  HIDDEN
+  FLAGGED
+}
+
+model DeviceSession {
+  id           String       @id @default(cuid())
+  token        String       @unique
+  createdAt    DateTime     @default(now())
+  lastSeenAt   DateTime     @updatedAt
+  submissions  Submission[]
+}
+
+model Tag {
+  id           String       @id @default(cuid())
+  slug         String       @unique
+  label        String       @unique
+  createdAt    DateTime     @default(now())
+  submissions  Submission[]
+}
+
+model Submission {
+  id              String            @id @default(cuid())
+  latitude        Decimal           @db.Decimal(9, 6)
+  longitude       Decimal           @db.Decimal(9, 6)
+  emotion         Emotion
+  intensity       Int?
+  reflection      String?           @db.VarChar(280)
+
+  status          SubmissionStatus  @default(VISIBLE)
+  hiddenReason    String?
+
+  tagId           String?
+  tag             Tag?              @relation(fields: [tagId], references: [id])
+
+  deviceSessionId String?
+  deviceSession   DeviceSession?    @relation(fields: [deviceSessionId], references: [id])
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([emotion])
+  @@index([tagId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([latitude, longitude])
+}
