@@ -22,10 +22,10 @@ app.use(cookieParser());
 app.use('/api', indexRouter);
 
 // Handle uncaught errors
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Error details:", err);
   res.status(500).json({
-    message: "Unhandled Error",
+    message: "Unhandled Internal Error",
     error: process.env.NODE_ENV === "production" ? undefined : err.message,
   });
 });
