@@ -39,7 +39,6 @@ model Tag {
   id           String       @id @default(cuid())
   slug         String       @unique
   label        String       @unique
-  createdAt    DateTime     @default(now())
   submissions  Submission[]
 }
 
