@@ -5,7 +5,10 @@ function Layout() {
   return (
     <>
       <Navbar />
-      <Outlet />
+      <div className=".dark">
+        <Outlet />
+      </div>
+      
     </>
   )
 }
