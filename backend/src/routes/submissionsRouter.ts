@@ -1,36 +1,38 @@
-import { Router } from 'express';
-import { prisma } from '../lib/prisma';
-import crypto from 'crypto';
-import { createSubmissionSchema } from '../schemas/submissionsSchema';
-import { ZodError } from 'zod';
+import { Router } from "express";
+import { prisma } from "../lib/prisma";
+import crypto from "crypto";
+import { createSubmissionSchema } from "../schemas/submissionsSchema";
+import { ZodError } from "zod";
 
 const router = Router();
 
 // Get all submissions
-router.get('/', async (_req, res) => {
+router.get("/", async (_req, res) => {
   try {
     const submissions = await prisma.submission.findMany({
       where: {
-        status: 'VISIBLE',
+        status: "VISIBLE",
       },
       include: {
         tag: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    res.json(submissions)
+    res.json(submissions);
   } catch (e) {
-    res.status(500).json({message: 'No valid submissions'})
+    console.error("GET /submissions failed:", e);
+    res.status(500).json({ message: "Failed to fetch submissions" });
   }
 });
 
 // Create a submission
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const {latitude, longitude, emotion, intensity, reflection, tagSlug} = createSubmissionSchema.parse(req.body);
+    const { latitude, longitude, emotion, intensity, reflection, tagSlug } =
+      createSubmissionSchema.parse(req.body);
 
     let deviceToken = req.cookies.deviceToken;
 
@@ -38,9 +40,9 @@ router.post('/', async (req, res) => {
     if (!deviceToken) {
       deviceToken = crypto.randomUUID();
 
-      res.cookie('deviceToken', deviceToken, {
+      res.cookie("deviceToken", deviceToken, {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: "lax",
         secure: false,
         maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
       });
@@ -60,7 +62,7 @@ router.post('/', async (req, res) => {
       });
 
       if (!tag) {
-        return res.status(400).json({ error: 'Invalid tag' });
+        return res.status(400).json({ error: "Invalid tag" });
       }
 
       tagId = tag.id;
@@ -85,12 +87,12 @@ router.post('/', async (req, res) => {
   } catch (error) {
     if (error instanceof ZodError) {
       return res.status(400).json({
-        error: 'Invalid submission payload',
+        error: "Invalid submission payload",
         issues: error.issues,
       });
     }
-    console.error('Failed to create submission:', error);
-    res.status(500).json({ error: 'Failed to create submission' });
+    console.error("Failed to create submission:", error);
+    res.status(500).json({ error: "Failed to create submission" });
   }
 });
 
