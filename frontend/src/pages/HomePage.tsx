@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import type { LatLngTuple } from "leaflet";
 import {
+  type Emotion,
   type SubmissionResponse,
+  emotionSchema,
+  submissionResponseSchema,
   submissionsResponseSchema,
 } from "../../../shared/schemas/submission";
 import api from "../api";
@@ -18,13 +21,32 @@ type DraftMarker = {
   lng: number;
 } | null;
 
+type SubmissionFormState = {
+  emotion: Emotion;
+  intensity: number;
+  reflection: string;
+  tagSlug: string;
+};
+
+const defaultFormState: SubmissionFormState = {
+  emotion: emotionSchema.options[0],
+  intensity: 3,
+  reflection: "",
+  tagSlug: "",
+};
+
 function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("pins");
   const [draftMarker, setDraftMarker] = useState<DraftMarker>(null);
+  const [formState, setFormState] =
+    useState<SubmissionFormState>(defaultFormState);
 
   const [submissions, setSubmissions] = useState<SubmissionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const center: LatLngTuple = [40.1075, -88.2272]; // Main Quad
 
@@ -34,11 +56,15 @@ function HomePage() {
         setIsLoading(true);
         const res = await api.get("/api/submissions");
         if (res.data.length === 0) {
+          setSubmissions([]);
+          setError(null);
           return;
         }
+        console.log(res.data);
         const parsed = submissionsResponseSchema.safeParse(res.data);
 
         if (!parsed.success) {
+          console.error(parsed.error);
           throw new Error("Invalid API response: zod parse failed.");
         }
         setSubmissions(parsed.data);
@@ -61,6 +87,55 @@ function HomePage() {
     }
     loadSubmissions();
   }, []);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!draftMarker) {
+      setSubmitError("Pick a location on the map before submitting.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+      setSubmitSuccess(null);
+
+      const res = await api.post("/api/submissions", {
+        latitude: draftMarker.lat,
+        longitude: draftMarker.lng,
+        emotion: formState.emotion,
+        intensity: formState.intensity,
+        reflection: formState.reflection.trim() || null,
+        tagSlug: formState.tagSlug.trim() || undefined,
+      });
+
+      console.log(res);
+
+      const parsed = submissionResponseSchema.safeParse(res.data);
+      if (!parsed.success) {
+        throw new Error("Invalid API response: zod parse failed.");
+      }
+
+      setSubmissions((current) => [parsed.data, ...current]);
+      setDraftMarker(null);
+      setFormState(defaultFormState);
+      setSubmitSuccess("Submission added.");
+    } catch (e: unknown) {
+      console.error(e);
+      if (e instanceof AxiosError) {
+        setSubmitError(
+          e.response?.data?.error ??
+            e.message ??
+            "Failed to create submission.",
+        );
+        return;
+      }
+      setSubmitError("Failed to create submission.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <section className="h-full flex flex-col sm:flex-row">
@@ -107,12 +182,19 @@ function HomePage() {
               <CardTitle>Add Submission</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {submitError ? (
+                <p className="text-sm text-red-600">{submitError}</p>
+              ) : null}
+              {submitSuccess ? (
+                <p className="text-sm text-green-600">{submitSuccess}</p>
+              ) : null}
+
               {!draftMarker ? (
                 <p className="text-sm text-muted-foreground">
                   Click anywhere on the map to place a draft marker.
                 </p>
               ) : (
-                <>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   <div className="text-sm">
                     <p>
                       <span className="font-medium">Latitude:</span>{" "}
@@ -124,16 +206,103 @@ function HomePage() {
                     </p>
                   </div>
 
-                  <Button className="w-full">Open Submission Form</Button>
+                  <label className="block space-y-1 text-sm">
+                    <span className="font-medium">Emotion</span>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      value={formState.emotion}
+                      onChange={(event) =>
+                        setFormState((current) => ({
+                          ...current,
+                          emotion: event.target.value as Emotion,
+                        }))
+                      }
+                    >
+                      {emotionSchema.options.map((emotion) => (
+                        <option key={emotion} value={emotion}>
+                          {emotion.charAt(0) + emotion.slice(1).toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block space-y-1 text-sm">
+                    <span className="font-medium">Intensity</span>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      value={formState.intensity}
+                      onChange={(event) =>
+                        setFormState((current) => ({
+                          ...current,
+                          intensity: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block space-y-1 text-sm">
+                    <span className="font-medium">Reflection</span>
+                    <textarea
+                      className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2"
+                      maxLength={280}
+                      placeholder="What are you feeling here?"
+                      value={formState.reflection}
+                      onChange={(event) =>
+                        setFormState((current) => ({
+                          ...current,
+                          reflection: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="block space-y-1 text-sm">
+                    <span className="font-medium">Tag Slug</span>
+                    <input
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      placeholder="optional-tag"
+                      value={formState.tagSlug}
+                      onChange={(event) =>
+                        setFormState((current) => ({
+                          ...current,
+                          tagSlug: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <p className="text-xs text-muted-foreground">
+                    Reflection is optional. Tag slug must already exist in the
+                    backend if you use one.
+                  </p>
+
+                  <Button
+                    className="w-full"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit"}
+                  </Button>
 
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setDraftMarker(null)}
+                    type="button"
+                    onClick={() => {
+                      setDraftMarker(null);
+                      setSubmitError(null);
+                      setSubmitSuccess(null);
+                    }}
                   >
                     Clear Draft Marker
                   </Button>
-                </>
+                </form>
               )}
             </CardContent>
           </Card>
