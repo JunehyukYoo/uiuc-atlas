@@ -21,7 +21,24 @@ router.get("/", async (_req, res) => {
       },
     });
 
-    res.json(submissions);
+    const response = submissions.map((submission) => ({
+      id: submission.id,
+      latitude: submission.latitude.toNumber(),
+      longitude: submission.longitude.toNumber(),
+      emotion: submission.emotion,
+      intensity: submission.intensity,
+      reflection: submission.reflection,
+      createdAt: submission.createdAt.toISOString(),
+      tag: submission.tag
+        ? {
+            id: submission.tag.id,
+            slug: submission.tag.slug,
+            label: submission.tag.label,
+          }
+        : null,
+    }));
+
+    res.json(response);
   } catch (e) {
     console.error("GET /submissions failed:", e);
     res.status(500).json({ message: "Failed to fetch submissions" });
@@ -83,7 +100,24 @@ router.post("/", async (req, res) => {
       },
     });
 
-    res.status(201).json(submission);
+    const response = {
+      id: submission.id,
+      latitude: submission.latitude.toNumber(),
+      longitude: submission.longitude.toNumber(),
+      emotion: submission.emotion,
+      intensity: submission.intensity,
+      reflection: submission.reflection,
+      createdAt: submission.createdAt.toISOString(),
+      tag: submission.tag
+        ? {
+            id: submission.tag.id,
+            slug: submission.tag.slug,
+            label: submission.tag.label,
+          }
+        : null,
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     if (error instanceof ZodError) {
       return res.status(400).json({

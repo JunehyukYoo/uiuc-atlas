@@ -24,9 +24,7 @@ export const submissionResponseSchema = z.object({
   emotion: emotionSchema,
   intensity: z.number().int().min(1).max(5),
   reflection: z.string().nullable(),
-  status: submissionStatusSchema,
   createdAt: z.string(),
-  updatedAt: z.string(),
   tag: tagSchema.nullable(),
 });
 
