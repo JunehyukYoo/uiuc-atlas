@@ -25,7 +25,7 @@ export const submissionResponseSchema = z.object({
   intensity: z.number().int().min(1).max(5),
   reflection: z.string().nullable(),
   createdAt: z.string(),
-  tag: tagSchema.nullable(),
+  tags: z.array(tagSchema),
 });
 
 export const submissionsResponseSchema = z.array(submissionResponseSchema);

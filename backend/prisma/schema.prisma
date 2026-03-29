@@ -36,10 +36,10 @@ model DeviceSession {
 }
 
 model Tag {
-  id           String       @id @default(cuid())
-  slug         String       @unique
-  label        String       @unique
-  submissions  Submission[]
+  id                  String                @id @default(cuid())
+  slug                String                @unique
+  label               String                @unique
+  submissionTags      SubmissionTag[]       // changed from submissions Submission[]
 }
 
 model Submission {
@@ -53,8 +53,7 @@ model Submission {
   status          SubmissionStatus  @default(VISIBLE)
   hiddenReason    String?
 
-  tagId           String?
-  tag             Tag?              @relation(fields: [tagId], references: [id])
+  submissionTags  SubmissionTag[]   // replaces tagId + tag
 
   deviceSessionId String
   deviceSession   DeviceSession    @relation(fields: [deviceSessionId], references: [id])
@@ -63,8 +62,18 @@ model Submission {
   updatedAt       DateTime          @updatedAt
 
   @@index([emotion])
-  @@index([tagId])
   @@index([createdAt])
   @@index([status])
   @@index([latitude, longitude])
+}
+
+model SubmissionTag {
+  submissionId  String
+  tagId         String
+
+  submission    Submission  @relation(fields: [submissionId], references: [id])
+  tag           Tag         @relation(fields: [tagId], references: [id])
+
+  @@id([submissionId, tagId])  // composite PK prevents duplicates
+  @@index([tagId])
 }

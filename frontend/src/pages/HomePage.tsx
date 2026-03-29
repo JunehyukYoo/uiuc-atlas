@@ -3,6 +3,7 @@ import type { LatLngTuple } from "leaflet";
 import {
   type Emotion,
   type SubmissionResponse,
+  type Tag,
   emotionSchema,
   submissionResponseSchema,
   submissionsResponseSchema,
@@ -13,6 +14,15 @@ import { AxiosError } from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import CampusMap from "@/components/map/CampusMap";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { Slider } from "@/components/ui/slider";
 
 type ViewMode = "pins" | "heatmap";
 
@@ -25,14 +35,14 @@ type SubmissionFormState = {
   emotion: Emotion;
   intensity: number;
   reflection: string;
-  tagSlug: string;
+  tagSlugs: string[];
 };
 
 const defaultFormState: SubmissionFormState = {
   emotion: emotionSchema.options[0],
   intensity: 3,
   reflection: "",
-  tagSlug: "",
+  tagSlugs: [],
 };
 
 function HomePage() {
@@ -40,6 +50,8 @@ function HomePage() {
   const [draftMarker, setDraftMarker] = useState<DraftMarker>(null);
   const [formState, setFormState] =
     useState<SubmissionFormState>(defaultFormState);
+  const [emotionsOptions, setEmotionsOptions] = useState<Emotion[]>([]);
+  const [tagOptions, setTagOptions] = useState<Tag[]>([]);
 
   const [submissions, setSubmissions] = useState<SubmissionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,10 +97,31 @@ function HomePage() {
         setIsLoading(false);
       }
     }
+
+    async function loadEmotions() {
+      try {
+        const res = await api.get("/api/emotions");
+        setEmotionsOptions(res.data);
+      } catch (e) {
+        console.error("Failed to load emotions:", e);
+      }
+    }
+
+    async function loadTags() {
+      try {
+        const res = await api.get("/api/tags");
+        setTagOptions(res.data);
+      } catch (e) {
+        console.error("Failed to load tags:", e);
+      }
+    }
+
     loadSubmissions();
+    loadEmotions();
+    loadTags();
   }, []);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!draftMarker) {
@@ -107,7 +140,7 @@ function HomePage() {
         emotion: formState.emotion,
         intensity: formState.intensity,
         reflection: formState.reflection.trim() || null,
-        tagSlug: formState.tagSlug.trim() || undefined,
+        tagSlugs: formState.tagSlugs,
       });
 
       console.log(res);
@@ -148,6 +181,7 @@ function HomePage() {
               center={center}
               draftMarker={draftMarker}
               submissions={submissions}
+              viewMode={viewMode}
               onMapClick={setDraftMarker}
             />
           )}
@@ -155,8 +189,8 @@ function HomePage() {
       </div>
       <div>{error ? error : ""}</div>
 
-      <aside className="w-full p-8">
-        <div className="h-full overflow-y-auto space-y-4">
+      <aside className="w-full p-8 h-[calc(100vh-4rem)] flex flex-col">
+        <div className="flex flex-col gap-4 h-full overflow-hidden">
           <Card>
             <CardHeader>
               <CardTitle>View</CardTitle>
@@ -177,137 +211,201 @@ function HomePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex-1 min-h-0">
             <CardHeader>
               <CardTitle>Add Submission</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {submitError ? (
-                <p className="text-sm text-red-600">{submitError}</p>
-              ) : null}
-              {submitSuccess ? (
-                <p className="text-sm text-green-600">{submitSuccess}</p>
-              ) : null}
+            <CardContent className="space-y-3 overflow-y-auto">
+              <div
+                className="overflow-y-auto h-full"
+                style={{ paddingRight: "18px", marginRight: "-18px" }} // shift scrollwheel
+              >
+                {submitError ? (
+                  <p className="text-sm text-red-600">{submitError}</p>
+                ) : null}
+                {submitSuccess ? (
+                  <p className="text-sm text-green-600">{submitSuccess}</p>
+                ) : null}
 
-              {!draftMarker ? (
-                <p className="text-sm text-muted-foreground">
-                  Click anywhere on the map to place a draft marker.
-                </p>
-              ) : (
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <div className="text-sm">
-                    <p>
-                      <span className="font-medium">Latitude:</span>{" "}
-                      {draftMarker.lat.toFixed(6)}
-                    </p>
-                    <p>
-                      <span className="font-medium">Longitude:</span>{" "}
-                      {draftMarker.lng.toFixed(6)}
-                    </p>
-                  </div>
-
-                  <label className="block space-y-1 text-sm">
-                    <span className="font-medium">Emotion</span>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                      value={formState.emotion}
-                      onChange={(event) =>
-                        setFormState((current) => ({
-                          ...current,
-                          emotion: event.target.value as Emotion,
-                        }))
-                      }
-                    >
-                      {emotionSchema.options.map((emotion) => (
-                        <option key={emotion} value={emotion}>
-                          {emotion.charAt(0) + emotion.slice(1).toLowerCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="block space-y-1 text-sm">
-                    <span className="font-medium">Intensity</span>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                      value={formState.intensity}
-                      onChange={(event) =>
-                        setFormState((current) => ({
-                          ...current,
-                          intensity: Number(event.target.value),
-                        }))
-                      }
-                    >
-                      {[1, 2, 3, 4, 5].map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="block space-y-1 text-sm">
-                    <span className="font-medium">Reflection</span>
-                    <textarea
-                      className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2"
-                      maxLength={280}
-                      placeholder="What are you feeling here?"
-                      value={formState.reflection}
-                      onChange={(event) =>
-                        setFormState((current) => ({
-                          ...current,
-                          reflection: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
-
-                  <label className="block space-y-1 text-sm">
-                    <span className="font-medium">Tag Slug</span>
-                    <input
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                      placeholder="optional-tag"
-                      value={formState.tagSlug}
-                      onChange={(event) =>
-                        setFormState((current) => ({
-                          ...current,
-                          tagSlug: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
-
-                  <p className="text-xs text-muted-foreground">
-                    Reflection is optional. Tag slug must already exist in the
-                    backend if you use one.
+                {!draftMarker ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click anywhere on the map to place a draft marker.
                   </p>
-
-                  <Button
-                    className="w-full"
-                    disabled={isSubmitting}
-                    type="submit"
+                ) : (
+                  <form
+                    className="flex flex-col gap-6 justify-around"
+                    onSubmit={handleSubmit}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit"}
-                  </Button>
+                    <div className="text-sm">
+                      <p>
+                        <span className="font-medium">Latitude:</span>{" "}
+                        {draftMarker.lat.toFixed(6)}
+                      </p>
+                      <p>
+                        <span className="font-medium">Longitude:</span>{" "}
+                        {draftMarker.lng.toFixed(6)}
+                      </p>
+                    </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    type="button"
-                    onClick={() => {
-                      setDraftMarker(null);
-                      setSubmitError(null);
-                      setSubmitSuccess(null);
-                    }}
-                  >
-                    Clear Draft Marker
-                  </Button>
-                </form>
-              )}
+                    <label className="block space-y-1 text-sm">
+                      <span className="font-medium">Emotion</span>
+                      <Combobox
+                        items={emotionsOptions}
+                        defaultValue={emotionsOptions[0]}
+                        onValueChange={(value) =>
+                          setFormState((current) => ({
+                            ...current,
+                            emotion: value as Emotion,
+                          }))
+                        }
+                      >
+                        <ComboboxInput
+                          placeholder="Select an emotion"
+                          required={true}
+                        />
+                        <ComboboxContent>
+                          <ComboboxEmpty>No items found.</ComboboxEmpty>
+                          <ComboboxList>
+                            {(item) => (
+                              <ComboboxItem key={item} value={item}>
+                                {item}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                    </label>
+
+                    <label className="block space-y-1 text-sm">
+                      <span className="font-medium flex justify-between items-center">
+                        Intensity
+                        <span className="text-sm text-muted-foreground text-right">
+                          On a scale of {1} - {5}
+                        </span>
+                      </span>
+                      <Slider
+                        defaultValue={[3]}
+                        max={5}
+                        min={1}
+                        step={1}
+                        className="mx-auto w-full max-w-xs"
+                        onValueChange={(value) =>
+                          setFormState((current) => ({
+                            ...current,
+                            intensity: value[0],
+                          }))
+                        }
+                      />
+                    </label>
+
+                    <label className="block space-y-1 text-sm">
+                      <span className="font-medium">Reflection</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2"
+                        maxLength={280}
+                        placeholder="What are you feeling here?"
+                        value={formState.reflection}
+                        onChange={(event) =>
+                          setFormState((current) => ({
+                            ...current,
+                            reflection: event.target.value,
+                          }))
+                        }
+                      />
+                    </label>
+
+                    <label className="block space-y-1 text-sm">
+                      <span className="font-medium">Tags</span>
+                      <Combobox
+                        items={tagOptions}
+                        multiple
+                        onValueChange={(value) =>
+                          setFormState((current) => ({
+                            ...current,
+                            tagSlugs: value as string[],
+                          }))
+                        }
+                      >
+                        <ComboboxInput
+                          placeholder={
+                            formState.tagSlugs.length > 0 ? "" : "Optional tags"
+                          }
+                        />
+                        <ComboboxContent>
+                          <ComboboxEmpty>No items found.</ComboboxEmpty>
+                          <ComboboxList>
+                            {(item) => (
+                              <ComboboxItem key={item.slug} value={item.slug}>
+                                {item.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                      {formState.tagSlugs.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {formState.tagSlugs.map((slug) => {
+                            const tag = tagOptions.find((t) => t.slug === slug);
+                            return (
+                              <span
+                                key={slug}
+                                className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
+                              >
+                                {tag?.label ?? slug}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFormState((current) => ({
+                                      ...current,
+                                      tagSlugs: current.tagSlugs.filter(
+                                        (s) => s !== slug,
+                                      ),
+                                    }))
+                                  }
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </label>
+
+                    <p className="text-xs text-muted-foreground">
+                      Reflection is optional, but listing the exact location is
+                      recommended. Use tags to characterize you submission.
+                    </p>
+
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        className="w-full"
+                        disabled={isSubmitting}
+                        type="submit"
+                      >
+                        {isSubmitting ? "Submitting..." : "Submit"}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        type="button"
+                        onClick={() => {
+                          setDraftMarker(null);
+                          setSubmitError(null);
+                          setSubmitSuccess(null);
+                        }}
+                      >
+                        Clear Draft Marker
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Filters</CardTitle>
             </CardHeader>
@@ -316,7 +414,7 @@ function HomePage() {
                 Emotion and tag filters can go here.
               </p>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </aside>
     </section>

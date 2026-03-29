@@ -14,7 +14,9 @@ router.get("/", async (_req, res) => {
         status: "VISIBLE",
       },
       include: {
-        tag: true,
+        submissionTags: {
+          include: { tag: true },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -29,13 +31,11 @@ router.get("/", async (_req, res) => {
       intensity: submission.intensity,
       reflection: submission.reflection,
       createdAt: submission.createdAt.toISOString(),
-      tag: submission.tag
-        ? {
-            id: submission.tag.id,
-            slug: submission.tag.slug,
-            label: submission.tag.label,
-          }
-        : null,
+      tags: submission.submissionTags.map((st) => ({
+        id: st.tag.id,
+        slug: st.tag.slug,
+        label: st.tag.label,
+      })),
     }));
 
     res.json(response);
@@ -48,12 +48,11 @@ router.get("/", async (_req, res) => {
 // Create a submission
 router.post("/", async (req, res) => {
   try {
-    const { latitude, longitude, emotion, intensity, reflection, tagSlug } =
+    const { latitude, longitude, emotion, intensity, reflection, tagSlugs } =
       createSubmissionSchema.parse(req.body);
 
     let deviceToken = req.cookies.deviceToken;
 
-    // Initialize device token if this is first submission
     if (!deviceToken) {
       deviceToken = crypto.randomUUID();
 
@@ -71,18 +70,19 @@ router.post("/", async (req, res) => {
       create: { token: deviceToken },
     });
 
-    let tagId: string | undefined = undefined;
-
-    if (tagSlug) {
-      const tag = await prisma.tag.findUnique({
-        where: { slug: tagSlug },
+    // Validate all tag slugs up front
+    if (tagSlugs && tagSlugs.length > 0) {
+      const foundTags = await prisma.tag.findMany({
+        where: { slug: { in: tagSlugs } },
       });
 
-      if (!tag) {
-        return res.status(400).json({ error: "Invalid tag" });
+      if (foundTags.length !== tagSlugs.length) {
+        const foundSlugs = foundTags.map((t) => t.slug);
+        const invalid = tagSlugs.filter((s) => !foundSlugs.includes(s));
+        return res
+          .status(400)
+          .json({ error: `Invalid tags: ${invalid.join(", ")}` });
       }
-
-      tagId = tag.id;
     }
 
     const submission = await prisma.submission.create({
@@ -92,11 +92,20 @@ router.post("/", async (req, res) => {
         emotion,
         intensity,
         reflection: reflection ?? null,
-        tagId,
         deviceSessionId: deviceSession.id,
+        submissionTags:
+          tagSlugs && tagSlugs.length > 0
+            ? {
+                create: tagSlugs.map((slug) => ({
+                  tag: { connect: { slug } },
+                })),
+              }
+            : undefined,
       },
       include: {
-        tag: true,
+        submissionTags: {
+          include: { tag: true },
+        },
       },
     });
 
@@ -108,13 +117,11 @@ router.post("/", async (req, res) => {
       intensity: submission.intensity,
       reflection: submission.reflection,
       createdAt: submission.createdAt.toISOString(),
-      tag: submission.tag
-        ? {
-            id: submission.tag.id,
-            slug: submission.tag.slug,
-            label: submission.tag.label,
-          }
-        : null,
+      tags: submission.submissionTags.map((st) => ({
+        id: st.tag.id,
+        slug: st.tag.slug,
+        label: st.tag.label,
+      })),
     };
 
     res.status(201).json(response);
