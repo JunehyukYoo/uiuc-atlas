@@ -10,17 +10,23 @@ import {
 } from "../../../shared/schemas/submission";
 import api from "../api";
 import { AxiosError } from "axios";
+import React from "react";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import CampusMap from "@/components/map/CampusMap";
 import {
   Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Slider } from "@/components/ui/slider";
 
@@ -61,6 +67,8 @@ function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const center: LatLngTuple = [40.1075, -88.2272]; // Main Quad
+
+  const comboboxAnchor = useComboboxAnchor();
 
   useEffect(() => {
     async function loadSubmissions() {
@@ -316,60 +324,53 @@ function HomePage() {
 
                     <label className="block space-y-1 text-sm">
                       <span className="font-medium">Tags</span>
+
                       <Combobox
-                        items={tagOptions}
                         multiple
-                        onValueChange={(value) =>
+                        autoHighlight
+                        items={tagOptions.map((t) => t.label)}
+                        onValueChange={(values) => {
+                          const slugs = (values as string[])
+                            .map(
+                              (label) =>
+                                tagOptions.find((t) => t.label === label)
+                                  ?.slug ?? "",
+                            )
+                            .filter(Boolean);
                           setFormState((current) => ({
                             ...current,
-                            tagSlugs: value as string[],
-                          }))
-                        }
+                            tagSlugs: slugs,
+                          }));
+                        }}
                       >
-                        <ComboboxInput
-                          placeholder={
-                            formState.tagSlugs.length > 0 ? "" : "Optional tags"
-                          }
-                        />
-                        <ComboboxContent>
+                        <ComboboxChips
+                          ref={comboboxAnchor}
+                          className="w-full max-w-xs"
+                        >
+                          <ComboboxValue>
+                            {(values) => (
+                              <React.Fragment>
+                                {values.map((value: string) => (
+                                  <ComboboxChip key={value}>
+                                    {value}
+                                  </ComboboxChip>
+                                ))}
+                                <ComboboxChipsInput />
+                              </React.Fragment>
+                            )}
+                          </ComboboxValue>
+                        </ComboboxChips>
+                        <ComboboxContent anchor={comboboxAnchor}>
                           <ComboboxEmpty>No items found.</ComboboxEmpty>
                           <ComboboxList>
                             {(item) => (
-                              <ComboboxItem key={item.slug} value={item.slug}>
-                                {item.label}
+                              <ComboboxItem key={item} value={item}>
+                                {item}
                               </ComboboxItem>
                             )}
                           </ComboboxList>
                         </ComboboxContent>
                       </Combobox>
-                      {formState.tagSlugs.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-1">
-                          {formState.tagSlugs.map((slug) => {
-                            const tag = tagOptions.find((t) => t.slug === slug);
-                            return (
-                              <span
-                                key={slug}
-                                className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
-                              >
-                                {tag?.label ?? slug}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setFormState((current) => ({
-                                      ...current,
-                                      tagSlugs: current.tagSlugs.filter(
-                                        (s) => s !== slug,
-                                      ),
-                                    }))
-                                  }
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
                     </label>
 
                     <p className="text-xs text-muted-foreground">
