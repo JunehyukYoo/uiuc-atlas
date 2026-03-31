@@ -1,33 +1,29 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type ViewMode = "pins" | "heatmap";
 
 type Props = {
-  viewMode: ViewMode;
   onChange: (mode: ViewMode) => void;
 };
 
-export function ViewToggle({ viewMode, onChange }: Props) {
+export function ViewToggle({ onChange }: Props) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>View</CardTitle>
-      </CardHeader>
-      <CardContent className="flex gap-2">
-        <Button
-          variant={viewMode === "pins" ? "default" : "outline"}
-          onClick={() => onChange("pins")}
-        >
+    <div className="flex flex-col gap-4">
+      <ToggleGroup
+        type="single"
+        defaultValue="pins"
+        variant="outline"
+        size="lg"
+        spacing={2}
+        onValueChange={(value) => onChange(value as ViewMode)}
+      >
+        <ToggleGroupItem value="pins" aria-label="Toggle pins">
           Pins
-        </Button>
-        <Button
-          variant={viewMode === "heatmap" ? "default" : "outline"}
-          onClick={() => onChange("heatmap")}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="heatmap" aria-label="Toggle heatmap">
           Heatmap
-        </Button>
-      </CardContent>
-    </Card>
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
   );
 }

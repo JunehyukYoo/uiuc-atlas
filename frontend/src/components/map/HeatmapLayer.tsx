@@ -17,8 +17,11 @@ const EMOTION_GRADIENTS = Object.fromEntries(
       slug,
       {
         0.0: `rgba(${r},${g},${b},0)`,
-        0.4: `rgba(${r},${g},${b},0.4)`,
-        1.0: `rgba(${r},${g},${b},0.9)`,
+        0.2: `rgba(${r},${g},${b},0.05)`,
+        0.4: `rgba(${r},${g},${b},0.15)`,
+        0.6: `rgba(${r},${g},${b},0.32)`,
+        0.8: `rgba(${r},${g},${b},0.52)`,
+        1.0: `rgba(${r},${g},${b},0.7)`,
       },
     ];
   }),
@@ -40,7 +43,7 @@ export function HeatmapLayer({ submissions, activeEmotions }: Props) {
       (grouped[s.emotion] ??= []).push([
         s.latitude,
         s.longitude,
-        Math.pow((s.intensity - 1) / 4, 1.5), // normalize intensity to [0,1] for heatmap with curve
+        Math.pow((s.intensity - 1) / 4, 2.0), // normalize intensity to [0,1] for heatmap with curve
       ]);
     }
 
@@ -52,11 +55,11 @@ export function HeatmapLayer({ submissions, activeEmotions }: Props) {
     for (const [emotion, gradient] of Object.entries(EMOTION_GRADIENTS)) {
       const points = grouped[emotion] ?? [];
       const layer = heatLayer(points, {
-        radius: 30,
-        blur: 25,
-        minOpacity: 0.5,
+        radius: 25,
+        blur: 15,
+        minOpacity: 0.05,
         maxZoom: MAX_ZOOM,
-        max: 3.5, // cap intensity to avoid opaque blobs
+        max: 1.0,
         gradient,
       });
       layersRef.current[emotion] = layer;
@@ -79,11 +82,18 @@ export function HeatmapLayer({ submissions, activeEmotions }: Props) {
       const metersPerPixel =
         (40075016.686 * Math.cos((40.1075 * Math.PI) / 180)) /
         Math.pow(2, zoom + 8);
-      const radiusInPixels = Math.round(50 / metersPerPixel); // 30 = meters radius you want
+      const radiusInPixels = Math.min(
+        80,
+        Math.max(20, Math.round(50 / metersPerPixel)),
+      );
+      const blurInPixels = Math.round(radiusInPixels * 0.5);
 
       Object.values(layersRef.current).forEach((layer) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (layer as any).setOptions({ radius: radiusInPixels });
+        (layer as any).setOptions({
+          radius: radiusInPixels,
+          blur: blurInPixels,
+        });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((layer as any)._map) layer.redraw();
       });

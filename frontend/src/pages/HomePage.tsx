@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import React from "react";
 import {
   type Emotion,
@@ -9,8 +9,10 @@ import {
   submissionsResponseSchema,
 } from "../../../shared/schemas/submission";
 import { EMOTIONS } from "../../../shared/emotions";
+
 import api from "../api";
 import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 import type { LatLngTuple } from "leaflet";
 
@@ -20,6 +22,12 @@ import { SubmissionForm } from "@/components/sidebar/SubmissionForm";
 
 import { ViewToggle } from "@/components/sidebar/ViewToggle";
 import { HeatmapControls } from "@/components/sidebar/HeatmapControls";
+import {
+  PinsFilter,
+  defaultPinsFilter,
+  type PinsFilterState,
+} from "@/components/sidebar/PinsFilter";
+import { SidebarDrawer } from "@/components/sidebar/SidebarDrawer";
 
 type ViewMode = "pins" | "heatmap";
 
@@ -50,6 +58,7 @@ function HomePage() {
   >(new Set(EMOTIONS as Emotion[])); // Which emotions to show on heatmap
   const [selectedSubmission, setSelectedSubmission] =
     useState<SubmissionResponse | null>(null);
+
   // FORM STATES
   const [draftMarker, setDraftMarker] = useState<DraftMarker>(null);
   const [formState, setFormState] =
@@ -60,13 +69,29 @@ function HomePage() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // FILTER STATE (pins mode)
+  const [pinsFilter, setPinsFilter] =
+    useState<PinsFilterState>(defaultPinsFilter);
+
   // LOADING STATES
   const [submissions, setSubmissions] = useState<SubmissionResponse[]>([]); // the pins
   const [isLoading, setIsLoading] = useState(true);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const center: LatLngTuple = [40.1075, -88.2272]; // Main Quad
 
+  const filteredSubmissions = useMemo(() => {
+    return submissions.filter(
+      (s) =>
+        pinsFilter.emotions.has(s.emotion as Emotion) &&
+        s.intensity >= pinsFilter.intensityMin &&
+        s.intensity <= pinsFilter.intensityMax &&
+        (pinsFilter.tagSlugs.size === 0 ||
+          s.tags.some((t) => pinsFilter.tagSlugs.has(t.slug))),
+    );
+  }, [submissions, pinsFilter]);
+
+  // Load submissions, emotions, and tags on mount
   useEffect(() => {
     async function loadSubmissions() {
       try {
@@ -125,6 +150,17 @@ function HomePage() {
     loadEmotions();
     loadTags();
   }, []);
+
+  // Show toasts for submission result or loading errors
+  useEffect(() => {
+    if (submitError) {
+      toast.error(submitError);
+    } else if (submitSuccess) {
+      toast.success(submitSuccess);
+    } else if (error) {
+      toast.error(error);
+    }
+  }, [submitError, submitSuccess, error]);
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -185,7 +221,9 @@ function HomePage() {
             <CampusMap
               center={center}
               draftMarker={draftMarker}
-              submissions={submissions}
+              submissions={
+                viewMode === "pins" ? filteredSubmissions : submissions
+              }
               viewMode={viewMode}
               activeEmotions={activeHeatmapEmotions}
               onMapClick={(latlng) => {
@@ -203,47 +241,64 @@ function HomePage() {
 
       <aside className="w-full p-8 h-[calc(100vh-4rem)] flex flex-col">
         <div className="flex flex-col gap-4 h-full overflow-hidden">
-          <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+          <ViewToggle onChange={setViewMode} />
 
           {viewMode === "heatmap" ? (
-            <HeatmapControls
-              activeEmotions={activeHeatmapEmotions}
-              onToggle={(emotion) =>
-                setActiveHeatmapEmotions((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(emotion)) {
-                    next.delete(emotion);
-                  } else {
-                    next.add(emotion);
-                  }
-                  return next;
-                })
-              }
-            />
-          ) : selectedSubmission ? (
-            <SubmissionDetail
-              submission={selectedSubmission}
-              onBack={() => setSelectedSubmission(null)}
-            />
+            <SidebarDrawer title="Heatmap Controls" defaultOpen={true}>
+              <HeatmapControls
+                activeEmotions={activeHeatmapEmotions}
+                onToggle={(emotion) =>
+                  setActiveHeatmapEmotions((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(emotion)) {
+                      next.delete(emotion);
+                    } else {
+                      next.add(emotion);
+                    }
+                    return next;
+                  })
+                }
+              />
+            </SidebarDrawer>
           ) : (
-            <SubmissionForm
-              draftMarker={draftMarker}
-              formState={formState}
-              emotionOptions={emotionsOptions}
-              tagOptions={tagOptions}
-              submitError={submitError}
-              submitSuccess={submitSuccess}
-              isSubmitting={isSubmitting}
-              onFormChange={(updates) =>
-                setFormState((cur) => ({ ...cur, ...updates }))
-              }
-              onSubmit={handleSubmit}
-              onClearDraft={() => {
-                setDraftMarker(null);
-                setSubmitError(null);
-                setSubmitSuccess(null);
-              }}
-            />
+            <>
+              <SidebarDrawer title="Filter Pins" defaultOpen={false}>
+                <PinsFilter
+                  filter={pinsFilter}
+                  tagOptions={tagOptions}
+                  onChange={setPinsFilter}
+                />
+              </SidebarDrawer>
+              <SidebarDrawer
+                title={selectedSubmission ? "Submission" : "Add Submission"}
+              >
+                {selectedSubmission ? (
+                  <SubmissionDetail
+                    submission={selectedSubmission}
+                    onBack={() => setSelectedSubmission(null)}
+                  />
+                ) : (
+                  <SubmissionForm
+                    draftMarker={draftMarker}
+                    formState={formState}
+                    emotionOptions={emotionsOptions}
+                    tagOptions={tagOptions}
+                    submitError={submitError}
+                    submitSuccess={submitSuccess}
+                    isSubmitting={isSubmitting}
+                    onFormChange={(updates) =>
+                      setFormState((cur) => ({ ...cur, ...updates }))
+                    }
+                    onSubmit={handleSubmit}
+                    onClearDraft={() => {
+                      setDraftMarker(null);
+                      setSubmitError(null);
+                      setSubmitSuccess(null);
+                    }}
+                  />
+                )}
+              </SidebarDrawer>
+            </>
           )}
         </div>
       </aside>

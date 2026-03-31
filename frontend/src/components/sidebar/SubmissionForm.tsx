@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -55,15 +54,11 @@ export function SubmissionForm({
   const comboboxAnchor = useComboboxAnchor();
 
   return (
-    <Card className="flex-1 min-h-0 flex flex-col">
-      <CardHeader>
-        <CardTitle>Add Submission</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 min-h-0 overflow-hidden">
-        <div
-          className="overflow-y-auto h-full"
-          style={{ paddingRight: "18px", marginRight: "-18px" }}
-        >
+    <div className="flex-1 min-h-0 overflow-hidden px-6 pb-4">
+      <div
+        className="overflow-y-auto h-full"
+        style={{ paddingRight: "18px", marginRight: "-18px" }}
+      >
           {submitError && (
             <p className="text-sm text-red-600 mb-3">{submitError}</p>
           )}
@@ -73,7 +68,10 @@ export function SubmissionForm({
 
           {!draftMarker ? (
             <p className="text-sm text-muted-foreground">
-              Click anywhere on the map to place a draft marker.
+              Click anywhere on the map to place a draft marker. Click on an
+              existing marker to view its submission details. A circular marker
+              with a number indicates a cluster of submissions. Click on the
+              marker to zoom in and reveal individual submissions.
             </p>
           ) : (
             <form className="flex flex-col gap-6 m-1" onSubmit={onSubmit}>
@@ -130,14 +128,14 @@ export function SubmissionForm({
                 />
               </label>
 
-              <label className="block space-y-1 text-sm">
+              <label className="block space-y-1 text-sm grow">
                 <span className="font-medium">Reflection</span>
                 <Textarea
                   maxLength={280}
                   placeholder="What are you feeling here? (optional)"
                   value={formState.reflection}
                   onChange={(e) => onFormChange({ reflection: e.target.value })}
-                  className="mt-1 resize-y"
+                  className="mt-1 min-h-20 resize-y"
                 />
               </label>
 
@@ -206,8 +204,7 @@ export function SubmissionForm({
               </div>
             </form>
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
