@@ -21,7 +21,11 @@ import { SubmissionDetail } from "@/components/sidebar/SubmissionDetail";
 import { SubmissionForm } from "@/components/sidebar/SubmissionForm";
 
 import { ViewToggle } from "@/components/sidebar/ViewToggle";
-import { HeatmapControls } from "@/components/sidebar/HeatmapControls";
+import {
+  HeatmapControls,
+  defaultHeatmapConfig,
+  type HeatmapConfig,
+} from "@/components/sidebar/HeatmapControls";
 import {
   PinsFilter,
   defaultPinsFilter,
@@ -56,6 +60,8 @@ function HomePage() {
   const [activeHeatmapEmotions, setActiveHeatmapEmotions] = useState<
     Set<Emotion>
   >(new Set(EMOTIONS as Emotion[])); // Which emotions to show on heatmap
+  const [heatmapConfig, setHeatmapConfig] =
+    useState<HeatmapConfig>(defaultHeatmapConfig);
   const [selectedSubmission, setSelectedSubmission] =
     useState<SubmissionResponse | null>(null);
 
@@ -226,6 +232,7 @@ function HomePage() {
               }
               viewMode={viewMode}
               activeEmotions={activeHeatmapEmotions}
+              heatmapConfig={heatmapConfig}
               onMapClick={(latlng) => {
                 setDraftMarker({ lat: latlng[0], lng: latlng[1] });
                 setSelectedSubmission(null);
@@ -247,6 +254,7 @@ function HomePage() {
             <SidebarDrawer title="Heatmap Controls" defaultOpen={true}>
               <HeatmapControls
                 activeEmotions={activeHeatmapEmotions}
+                config={heatmapConfig}
                 onToggle={(emotion) =>
                   setActiveHeatmapEmotions((prev) => {
                     const next = new Set(prev);
@@ -258,6 +266,11 @@ function HomePage() {
                     return next;
                   })
                 }
+                onConfigChange={setHeatmapConfig}
+                onReset={() => {
+                  setHeatmapConfig(defaultHeatmapConfig);
+                  setActiveHeatmapEmotions(new Set(EMOTIONS as Emotion[]));
+                }}
               />
             </SidebarDrawer>
           ) : (

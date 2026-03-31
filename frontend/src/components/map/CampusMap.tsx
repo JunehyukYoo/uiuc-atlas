@@ -12,6 +12,7 @@ import { HeatmapLayer } from "./HeatmapLayer";
 import MapClickHandler from "./MapClickHandler";
 
 import { EMOTION_META } from "../../../../shared/emotions";
+import { type HeatmapConfig } from "@/components/sidebar/HeatmapControls";
 
 type DraftMarker = {
   lat: number;
@@ -24,6 +25,7 @@ type CampusMapProps = {
   submissions: SubmissionResponse[];
   viewMode: "pins" | "heatmap";
   activeEmotions: Set<Emotion>;
+  heatmapConfig: HeatmapConfig;
   onMapClick: (latlng: LatLngTuple) => void;
   onSubmissionClick: (submission: SubmissionResponse) => void;
 };
@@ -72,6 +74,7 @@ function CampusMap({
   submissions,
   viewMode,
   activeEmotions,
+  heatmapConfig,
   onMapClick,
   onSubmissionClick,
 }: CampusMapProps) {
@@ -173,6 +176,7 @@ function CampusMap({
         <HeatmapLayer
           submissions={submissions}
           activeEmotions={activeEmotions}
+          config={heatmapConfig}
         />
       )}
     </MapContainer>

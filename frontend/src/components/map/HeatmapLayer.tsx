@@ -1,69 +1,73 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
-import { heatLayer, type HeatLayer } from "leaflet";
-import "leaflet.heat";
+import * as L from "leaflet";
+import "leaflet-webgl-heatmap/src/webgl-heatmap/webgl-heatmap.js";
+import "leaflet-webgl-heatmap";
 import type { SubmissionResponse } from "../../../../shared/schemas/submission";
-import { MAX_ZOOM } from "./CampusMap";
-
 import { EMOTION_META } from "../../../../shared/emotions";
+import type { HeatmapConfig } from "@/components/sidebar/HeatmapControls";
 
-const EMOTION_GRADIENTS = Object.fromEntries(
+// Build a 256x1 gradient canvas for an emotion:
+// intensity 0 → washed-out color, intensity 1 → full color
+function buildGradientCanvas(r: number, g: number, b: number): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d")!;
+  const grad = ctx.createLinearGradient(0, 0, 256, 0);
+  grad.addColorStop(0, `rgb(${Math.round(r * 0.4)},${Math.round(g * 0.4)},${Math.round(b * 0.4)})`);
+  grad.addColorStop(1, `rgb(${r},${g},${b})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 1);
+  return canvas;
+}
+
+const GRADIENT_CANVASES = Object.fromEntries(
   Object.entries(EMOTION_META).map(([slug, { color }]) => {
-    // Convert hex to rgb components for rgba usage
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
     const b = parseInt(color.slice(5, 7), 16);
-    return [
-      slug,
-      {
-        0.0: `rgba(${r},${g},${b},0)`,
-        0.2: `rgba(${r},${g},${b},0.05)`,
-        0.4: `rgba(${r},${g},${b},0.15)`,
-        0.6: `rgba(${r},${g},${b},0.32)`,
-        0.8: `rgba(${r},${g},${b},0.52)`,
-        1.0: `rgba(${r},${g},${b},0.7)`,
-      },
-    ];
+    return [slug, buildGradientCanvas(r, g, b)];
   }),
 );
 
 type Props = {
   submissions: SubmissionResponse[];
-  activeEmotions: Set<string>; // which emotions to show
+  activeEmotions: Set<string>;
+  config: HeatmapConfig;
 };
 
-export function HeatmapLayer({ submissions, activeEmotions }: Props) {
+export function HeatmapLayer({ submissions, activeEmotions, config }: Props) {
   const map = useMap();
-  const layersRef = useRef<Record<string, HeatLayer>>({});
+  const layersRef = useRef<Record<string, L.WebGLHeatMap>>({});
 
   useEffect(() => {
-    // Group submissions by emotion up front
     const grouped: Record<string, [number, number, number][]> = {};
     for (const s of submissions) {
       (grouped[s.emotion] ??= []).push([
         s.latitude,
         s.longitude,
-        Math.pow((s.intensity - 1) / 4, 2.0), // normalize intensity to [0,1] for heatmap with curve
+        (s.intensity - 1) / 4, // normalize to [0, 1]
       ]);
     }
 
-    // Clean up any existing layers
     Object.values(layersRef.current).forEach((l) => l.remove());
     layersRef.current = {};
 
-    // Create each layer with data already included, add if active
-    for (const [emotion, gradient] of Object.entries(EMOTION_GRADIENTS)) {
-      const points = grouped[emotion] ?? [];
-      const layer = heatLayer(points, {
-        radius: 25,
-        blur: 15,
-        minOpacity: 0.05,
-        maxZoom: MAX_ZOOM,
-        max: 1.0,
-        gradient,
+    for (const slug of Object.keys(EMOTION_META)) {
+      const layer = L.webGLHeatmap({
+        size: config.sizeMeters,
+        units: "m",
+        opacity: config.opacity,
+        alphaRange: config.alphaRange,
+        gradientTexture: GRADIENT_CANVASES[slug],
+        autoresize: true,
       });
-      layersRef.current[emotion] = layer;
-      if (activeEmotions.has(emotion)) {
+
+      layer.setData(grouped[slug] ?? []);
+      layersRef.current[slug] = layer;
+
+      if (activeEmotions.has(slug)) {
         layer.addTo(map);
       }
     }
@@ -71,41 +75,7 @@ export function HeatmapLayer({ submissions, activeEmotions }: Props) {
     return () => {
       Object.values(layersRef.current).forEach((l) => l.remove());
     };
-  }, [map, submissions, activeEmotions]);
-
-  useEffect(() => {
-    if (!map) return;
-
-    function updateRadius() {
-      const zoom = map.getZoom();
-      // Convert a fixed meter radius to pixels at current zoom
-      const metersPerPixel =
-        (40075016.686 * Math.cos((40.1075 * Math.PI) / 180)) /
-        Math.pow(2, zoom + 8);
-      const radiusInPixels = Math.min(
-        80,
-        Math.max(20, Math.round(50 / metersPerPixel)),
-      );
-      const blurInPixels = Math.round(radiusInPixels * 0.5);
-
-      Object.values(layersRef.current).forEach((layer) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (layer as any).setOptions({
-          radius: radiusInPixels,
-          blur: blurInPixels,
-        });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((layer as any)._map) layer.redraw();
-      });
-    }
-
-    map.on("zoom", updateRadius);
-    updateRadius(); // set initial radius
-
-    return () => {
-      map.off("zoom", updateRadius);
-    };
-  }, [map]);
+  }, [map, submissions, activeEmotions, config]);
 
   return null;
 }
