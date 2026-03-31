@@ -9,13 +9,13 @@ import {
   ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import type { Emotion, Tag } from "../../../../shared/schemas/submission";
+import { EMOTION_META } from "../../../../shared/emotions";
 
 type DraftMarker = { lat: number; lng: number } | null;
 
@@ -75,28 +75,30 @@ export function SubmissionForm({
               </p>
             </div>
 
-            <label className="block space-y-1 text-sm">
+            <div className="space-y-1 text-sm">
               <span className="font-medium">Emotion</span>
-              <Combobox
-                items={emotionOptions}
-                defaultValue={emotionOptions[0]}
-                onValueChange={(value) =>
-                  onFormChange({ emotion: value as Emotion })
-                }
-              >
-                <ComboboxInput placeholder="Select an emotion" required />
-                <ComboboxContent>
-                  <ComboboxEmpty>No items found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(item) => (
-                      <ComboboxItem key={item} value={item}>
-                        {item}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </label>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {emotionOptions.map((emotion) => (
+                  <Button
+                    key={emotion}
+                    type="button"
+                    size="sm"
+                    variant={formState.emotion === emotion ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    style={{
+                      borderColor: EMOTION_META[emotion].color,
+                      ...(formState.emotion === emotion && {
+                        backgroundColor: EMOTION_META[emotion].color,
+                        color: "white",
+                      }),
+                    }}
+                    onClick={() => onFormChange({ emotion })}
+                  >
+                    {EMOTION_META[emotion].label}
+                  </Button>
+                ))}
+              </div>
+            </div>
 
             <label className="block space-y-1 text-sm">
               <span className="font-medium flex justify-between items-center">

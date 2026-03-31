@@ -27,3 +27,32 @@ body {
 a:hover {
   text-decoration: underline;
 }
+
+/* Leaflet UI overrides */
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border-color: var(--border);
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--accent);
+}
+
+.leaflet-bar {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.leaflet-control-attribution {
+  background-color: var(--card) !important;
+  color: var(--muted-foreground) !important;
+  border-top-left-radius: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--muted-foreground) !important;
+}
