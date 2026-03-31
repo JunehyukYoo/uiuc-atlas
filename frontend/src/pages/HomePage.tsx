@@ -273,18 +273,13 @@ function HomePage() {
                 title={selectedSubmission ? "Submission" : "Add Submission"}
               >
                 {selectedSubmission ? (
-                  <SubmissionDetail
-                    submission={selectedSubmission}
-                    onBack={() => setSelectedSubmission(null)}
-                  />
+                  <SubmissionDetail submission={selectedSubmission} />
                 ) : (
                   <SubmissionForm
                     draftMarker={draftMarker}
                     formState={formState}
                     emotionOptions={emotionsOptions}
                     tagOptions={tagOptions}
-                    submitError={submitError}
-                    submitSuccess={submitSuccess}
                     isSubmitting={isSubmitting}
                     onFormChange={(updates) =>
                       setFormState((cur) => ({ ...cur, ...updates }))
