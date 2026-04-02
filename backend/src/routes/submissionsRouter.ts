@@ -6,7 +6,8 @@ import { ZodError } from "zod";
 
 const router = Router();
 
-const SUBMISSION_COOLDOWN_MS = 60 * 1000; // 1 minute between submissions
+const SUBMISSION_COOLDOWN_MS =
+  process.env.NODE_ENV === "production" ? 60 * 1000 : 1;
 
 // Get all submissions
 router.get("/", async (_req, res) => {
