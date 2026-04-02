@@ -180,7 +180,7 @@ function HomePage() {
       setIsSubmitting(true);
       setSubmitError(null);
       setSubmitSuccess(null);
-
+      // TODO: Implement submission limitting
       const res = await api.post("/api/submissions", {
         latitude: draftMarker.lat,
         longitude: draftMarker.lng,
@@ -204,6 +204,13 @@ function HomePage() {
     } catch (e: unknown) {
       console.error(e);
       if (e instanceof AxiosError) {
+        if (e.response?.status === 429 && e.response.data?.retryAfter) {
+          const retryTime = new Date(e.response.data.retryAfter);
+          toast.warning(
+            `Too many submissions. Try again at ${retryTime.toLocaleTimeString()}.`,
+          );
+          return;
+        }
         setSubmitError(
           e.response?.data?.error ??
             e.message ??

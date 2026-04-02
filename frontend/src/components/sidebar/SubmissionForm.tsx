@@ -60,7 +60,7 @@ export function SubmissionForm({
             Click anywhere on the map to place a draft marker. Click on an
             existing marker to view its submission details. A circular marker
             with a number indicates a cluster of submissions. Click on the
-            marker to zoom in and reveal individual submissions.
+            marker to zoom in and reveal individual submissions. Note that users are limited to one submission post per minute. 
           </p>
         ) : (
           <form className="flex flex-col gap-6 m-1" onSubmit={onSubmit}>

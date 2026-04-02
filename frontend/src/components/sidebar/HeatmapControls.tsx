@@ -39,18 +39,8 @@ export function HeatmapControls({
     config.alphaRange !== defaultHeatmapConfig.alphaRange;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4 space-y-5">
-      {isModified && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 text-xs text-muted-foreground -ml-2"
-          onClick={onReset}
-        >
-          Reset all
-        </Button>
-      )}
-
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-2 space-y-5">
       {/* Emotion toggles */}
       <div className="space-y-2">
         <p className="text-sm font-medium">Layers</p>
@@ -137,6 +127,15 @@ export function HeatmapControls({
           }
         />
       </div>
+      </div>
+
+      {isModified && (
+        <div className="px-6 pb-4 pt-2">
+          <Button variant="outline" className="w-full" onClick={onReset}>
+            Reset all
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

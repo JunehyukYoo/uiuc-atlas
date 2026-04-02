@@ -6,6 +6,8 @@ import { ZodError } from "zod";
 
 const router = Router();
 
+const SUBMISSION_COOLDOWN_MS = 60 * 1000; // 1 minute between submissions
+
 // Get all submissions
 router.get("/", async (_req, res) => {
   try {
@@ -69,6 +71,26 @@ router.post("/", async (req, res) => {
       update: {},
       create: { token: deviceToken },
     });
+
+    // Rate limit: one submission per cooldown window per device session
+    const lastSubmission = await prisma.submission.findFirst({
+      where: { deviceSessionId: deviceSession.id },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+
+    if (lastSubmission) {
+      const elapsed = Date.now() - lastSubmission.createdAt.getTime();
+      if (elapsed < SUBMISSION_COOLDOWN_MS) {
+        const retryAfter = new Date(
+          lastSubmission.createdAt.getTime() + SUBMISSION_COOLDOWN_MS,
+        );
+        return res.status(429).json({
+          error: "Rate limit exceeded",
+          retryAfter: retryAfter.toISOString(),
+        });
+      }
+    }
 
     // Validate all tag slugs up front
     if (tagSlugs && tagSlugs.length > 0) {

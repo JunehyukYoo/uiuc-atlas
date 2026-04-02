@@ -46,18 +46,8 @@ export function PinsFilter({ filter, tagOptions, onChange }: Props) {
     filter.tagSlugs.size > 0;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4 space-y-4">
-      {isFiltered && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 text-xs text-muted-foreground -ml-2"
-          onClick={() => onChange(defaultPinsFilter)}
-        >
-          Reset filters
-        </Button>
-      )}
-
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-2 space-y-4">
       <div className="space-y-2">
         <p className="text-sm font-medium">Emotion</p>
         <div className="flex flex-wrap gap-1.5">
@@ -124,6 +114,19 @@ export function PinsFilter({ filter, tagOptions, onChange }: Props) {
               </Badge>
             ))}
           </div>
+        </div>
+      )}
+      </div>
+
+      {isFiltered && (
+        <div className="px-6 pb-4 pt-2">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => onChange(defaultPinsFilter)}
+          >
+            Reset filters
+          </Button>
         </div>
       )}
     </div>
