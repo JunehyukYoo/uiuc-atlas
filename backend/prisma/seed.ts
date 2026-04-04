@@ -1,13 +1,13 @@
-import 'dotenv/config';
-import { prisma } from '../src/lib/prisma';
+import "dotenv/config";
+import { prisma } from "../src/lib/prisma.js";
 
 const TAGS = [
-  { slug: 'international-student', label: 'International Student' },
-  { slug: 'first-generation', label: 'First-Generation Student' },
-  { slug: 'commuter', label: 'Commuter' },
-  { slug: 'transfer-student', label: 'Transfer Student' },
-  { slug: 'graduate-student', label: 'Graduate Student' },
-  { slug: 'out-of-state', label: 'Out-of-State Student' },
+  { slug: "international-student", label: "International Student" },
+  { slug: "first-generation", label: "First-Generation Student" },
+  { slug: "commuter", label: "Commuter" },
+  { slug: "transfer-student", label: "Transfer Student" },
+  { slug: "graduate-student", label: "Graduate Student" },
+  { slug: "out-of-state", label: "Out-of-State Student" },
 ];
 
 async function main() {
