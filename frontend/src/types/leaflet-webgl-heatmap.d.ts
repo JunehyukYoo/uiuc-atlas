@@ -1,6 +1,3 @@
-declare module "leaflet-webgl-heatmap" {}
-declare module "leaflet-webgl-heatmap/src/webgl-heatmap/webgl-heatmap.js" {}
-
 import "leaflet";
 
 declare module "leaflet" {
@@ -25,3 +22,6 @@ declare module "leaflet" {
 
   function webGLHeatmap(options?: WebGLHeatmapOptions): WebGLHeatMap;
 }
+
+declare module "leaflet-webgl-heatmap";
+declare module "leaflet-webgl-heatmap/src/webgl-heatmap/webgl-heatmap.js";
