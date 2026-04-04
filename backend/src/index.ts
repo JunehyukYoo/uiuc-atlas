@@ -1,25 +1,27 @@
-import 'dotenv/config';
+import "dotenv/config";
 
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import express, { Request, Response, NextFunction } from 'express';
-import { indexRouter } from './routes/indexRouter';
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express, { Request, Response, NextFunction } from "express";
+import { indexRouter } from "./routes/indexRouter.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
+const ORIGIN = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Setup coors
-app.use(cors({
-  origin: ORIGIN,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: ORIGIN,
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 app.use(cookieParser());
 
 // Setup routers
-app.use('/api', indexRouter);
+app.use("/api", indexRouter);
 
 // Handle uncaught errors
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -32,5 +34,5 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`);
 });

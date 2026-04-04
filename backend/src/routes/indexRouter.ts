@@ -1,9 +1,9 @@
 import { Router, Request, Response } from "express";
-import { healthRouter } from "./healthRouter";
-import { submissionsRouter } from "./submissionsRouter";
-import { tagsRouter } from "./tagsRouter";
-import { heatmapRouter } from "./heatmapRouter";
-import { emotionsRouter } from "./emotionsRouter";
+import { healthRouter } from "./healthRouter.js";
+import { submissionsRouter } from "./submissionsRouter.js";
+import { tagsRouter } from "./tagsRouter.js";
+import { heatmapRouter } from "./heatmapRouter.js";
+import { emotionsRouter } from "./emotionsRouter.js";
 
 const router = Router();
 
