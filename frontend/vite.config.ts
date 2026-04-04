@@ -12,7 +12,11 @@ function leafletGlobalPlugin(): Plugin {
     name: 'inject-leaflet-into-webgl-heatmap',
     transform(code, id) {
       if (id.includes('leaflet-webgl-heatmap')) {
-        return `import * as L from 'leaflet';\n${code}`;
+        // `import * as L` makes L.WebGLHeatMap a named import binding — rolldown
+        // forbids assigning to it. Assigning the namespace to a local `const L`
+        // makes property mutations plain object assignments in rolldown's view,
+        // while still mutating the same shared leaflet object at runtime.
+        return `import * as _leaflet from 'leaflet';\nconst L = _leaflet;\n${code}`;
       }
     },
   };
