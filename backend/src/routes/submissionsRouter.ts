@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import crypto from "crypto";
-import { createSubmissionSchema } from "../schemas/submissionsSchema";
+import { createSubmissionSchema } from "../schemas/submissionsSchema.js";
 import { ZodError } from "zod";
 
 const router = Router();

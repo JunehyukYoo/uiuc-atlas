@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Emotion } from "../../generated/prisma/client";
+import { Emotion } from "../../generated/prisma/client.js";
 
 export const createSubmissionSchema = z.object({
   latitude: z.number().min(-90).max(90),

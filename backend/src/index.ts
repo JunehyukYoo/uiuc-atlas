@@ -3,7 +3,7 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Request, Response, NextFunction } from 'express';
-import { indexRouter } from './routes/indexRouter';
+import { indexRouter } from './routes/indexRouter.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
