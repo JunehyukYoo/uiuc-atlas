@@ -1,4 +1,3 @@
-import "@/lib/leaflet-global"; // must be first — sets window.L for the plugin below
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import * as L from "leaflet";
