@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { Emotion } from "../../generated/prisma/enums.js";
+import { Emotion } from "../../generated/prisma/enums";
 
 const router = Router();
 
