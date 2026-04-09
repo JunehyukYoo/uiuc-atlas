@@ -50,146 +50,138 @@ export function SubmissionForm({
   const comboboxAnchor = useComboboxAnchor();
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden px-6 pb-4">
-      <div
-        className="overflow-y-auto h-full"
-        style={{ paddingRight: "18px", marginRight: "-18px" }}
-      >
-        {!draftMarker ? (
-          <p className="text-sm text-muted-foreground">
-            Click anywhere on the map to place a draft marker. Click on an
-            existing marker to view its submission details. A circular marker
-            with a number indicates a cluster of submissions. Click on the
-            marker to zoom in and reveal individual submissions. Note that users are limited to one submission post per minute. 
-          </p>
-        ) : (
-          <form className="flex flex-col gap-6 m-1" onSubmit={onSubmit}>
-            <div className="text-sm">
-              <p>
-                <span className="font-medium">Latitude:</span>{" "}
-                {draftMarker.lat.toFixed(6)}
-              </p>
-              <p>
-                <span className="font-medium">Longitude:</span>{" "}
-                {draftMarker.lng.toFixed(6)}
-              </p>
-            </div>
-
-            <div className="space-y-1 text-sm">
-              <span className="font-medium">Emotion</span>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {emotionOptions.map((emotion) => (
-                  <Button
-                    key={emotion}
-                    type="button"
-                    size="sm"
-                    variant={formState.emotion === emotion ? "default" : "outline"}
-                    className="h-7 text-xs"
-                    style={{
-                      borderColor: EMOTION_META[emotion].color,
-                      ...(formState.emotion === emotion && {
-                        backgroundColor: EMOTION_META[emotion].color,
-                        color: "white",
-                      }),
-                    }}
-                    onClick={() => onFormChange({ emotion })}
-                  >
-                    {EMOTION_META[emotion].label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium flex justify-between items-center">
-                Intensity
-                <span className="text-muted-foreground">
-                  On a scale of 1 - 5
-                </span>
-              </span>
-              <Slider
-                defaultValue={[3]}
-                max={5}
-                min={1}
-                step={1}
-                className="w-full"
-                onValueChange={(value) => onFormChange({ intensity: value[0] })}
-              />
-            </label>
-
-            <label className="block space-y-1 text-sm grow">
-              <span className="font-medium">Reflection</span>
-              <Textarea
-                maxLength={280}
-                placeholder="What are you feeling here? (optional)"
-                value={formState.reflection}
-                onChange={(e) => onFormChange({ reflection: e.target.value })}
-                className="mt-1 min-h-20 resize-y"
-              />
-            </label>
-
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">Tags</span>
-              <Combobox
-                multiple
-                autoHighlight
-                items={tagOptions.map((t) => t.label)}
-                onValueChange={(values) => {
-                  const slugs = (values as string[])
-                    .map(
-                      (label) =>
-                        tagOptions.find((t) => t.label === label)?.slug ?? "",
-                    )
-                    .filter(Boolean);
-                  onFormChange({ tagSlugs: slugs });
-                }}
-              >
-                <ComboboxChips ref={comboboxAnchor} className="w-full mt-1">
-                  <ComboboxValue>
-                    {(values) => (
-                      <React.Fragment>
-                        {values.map((value: string) => (
-                          <ComboboxChip key={value}>{value}</ComboboxChip>
-                        ))}
-                        <ComboboxChipsInput />
-                      </React.Fragment>
-                    )}
-                  </ComboboxValue>
-                </ComboboxChips>
-                <ComboboxContent anchor={comboboxAnchor}>
-                  <ComboboxEmpty>No items found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(item) => (
-                      <ComboboxItem key={item} value={item}>
-                        {item}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </label>
-
-            <p className="text-xs text-muted-foreground">
-              Reflection is optional, but listing the exact location is
-              recommended.
+    <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4">
+      {!draftMarker ? (
+        <p className="text-sm text-muted-foreground">
+          Click anywhere on the map to place a pin.
+        </p>
+      ) : (
+        <form className="flex flex-col gap-6 m-1" onSubmit={onSubmit}>
+          <div className="text-sm">
+            <p>
+              <span className="font-medium">Latitude:</span>{" "}
+              {draftMarker.lat.toFixed(6)}
             </p>
+            <p>
+              <span className="font-medium">Longitude:</span>{" "}
+              {draftMarker.lng.toFixed(6)}
+            </p>
+          </div>
 
-            <div className="flex flex-col gap-2">
-              <Button className="w-full" disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                type="button"
-                onClick={onClearDraft}
-              >
-                Clear Draft Marker
-              </Button>
+          <div className="space-y-1 text-sm">
+            <span className="font-medium">Emotion</span>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {emotionOptions.map((emotion) => (
+                <Button
+                  key={emotion}
+                  type="button"
+                  size="sm"
+                  variant={
+                    formState.emotion === emotion ? "default" : "outline"
+                  }
+                  className="h-7 text-xs"
+                  style={{
+                    borderColor: EMOTION_META[emotion].color,
+                    ...(formState.emotion === emotion && {
+                      backgroundColor: EMOTION_META[emotion].color,
+                      color: "white",
+                    }),
+                  }}
+                  onClick={() => onFormChange({ emotion })}
+                >
+                  {EMOTION_META[emotion].label}
+                </Button>
+              ))}
             </div>
-          </form>
-        )}
-      </div>
+          </div>
+
+          <label className="block space-y-1 text-sm">
+            <span className="font-medium flex justify-between items-center">
+              Intensity
+              <span className="text-muted-foreground">On a scale of 1 - 5</span>
+            </span>
+            <Slider
+              defaultValue={[3]}
+              max={5}
+              min={1}
+              step={1}
+              className="w-full"
+              onValueChange={(value) => onFormChange({ intensity: value[0] })}
+            />
+          </label>
+
+          <label className="block space-y-1 text-sm grow">
+            <span className="font-medium">Reflection</span>
+            <Textarea
+              maxLength={280}
+              placeholder="What are you feeling here? (optional)"
+              value={formState.reflection}
+              onChange={(e) => onFormChange({ reflection: e.target.value })}
+              className="mt-1 min-h-20 resize-y"
+            />
+          </label>
+
+          <label className="block space-y-1 text-sm">
+            <span className="font-medium">Tags</span>
+            <Combobox
+              multiple
+              autoHighlight
+              items={tagOptions.map((t) => t.label)}
+              onValueChange={(values) => {
+                const slugs = (values as string[])
+                  .map(
+                    (label) =>
+                      tagOptions.find((t) => t.label === label)?.slug ?? "",
+                  )
+                  .filter(Boolean);
+                onFormChange({ tagSlugs: slugs });
+              }}
+            >
+              <ComboboxChips ref={comboboxAnchor} className="w-full mt-1">
+                <ComboboxValue>
+                  {(values) => (
+                    <React.Fragment>
+                      {values.map((value: string) => (
+                        <ComboboxChip key={value}>{value}</ComboboxChip>
+                      ))}
+                      <ComboboxChipsInput />
+                    </React.Fragment>
+                  )}
+                </ComboboxValue>
+              </ComboboxChips>
+              <ComboboxContent anchor={comboboxAnchor}>
+                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(item) => (
+                    <ComboboxItem key={item} value={item}>
+                      {item}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </label>
+
+          <p className="text-xs text-muted-foreground">
+            Reflection is optional, but listing the exact location is
+            recommended.
+          </p>
+
+          <div className="flex flex-col gap-2">
+            <Button className="w-full" disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              type="button"
+              onClick={onClearDraft}
+            >
+              Clear Draft Marker
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

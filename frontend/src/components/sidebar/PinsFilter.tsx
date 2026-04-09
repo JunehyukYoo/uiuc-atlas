@@ -48,74 +48,74 @@ export function PinsFilter({ filter, tagOptions, onChange }: Props) {
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-2 space-y-4">
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Emotion</p>
-        <div className="flex flex-wrap gap-1.5">
-          {(EMOTIONS as Emotion[]).map((emotion) => (
-            <Button
-              key={emotion}
-              size="sm"
-              variant={filter.emotions.has(emotion) ? "default" : "outline"}
-              className="h-7 text-xs"
-              style={{
-                borderColor: EMOTION_META[emotion].color,
-                ...(filter.emotions.has(emotion) && {
-                  backgroundColor: EMOTION_META[emotion].color,
-                  color: "white",
-                }),
-              }}
-              onClick={() => toggleEmotion(emotion)}
-            >
-              {EMOTION_META[emotion].label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-sm font-medium flex justify-between">
-          <span>Intensity</span>
-          <span className="text-muted-foreground font-normal">
-            {filter.intensityMin === filter.intensityMax
-              ? filter.intensityMin
-              : `${filter.intensityMin} – ${filter.intensityMax}`}
-          </span>
-        </p>
-        <Slider
-          value={[filter.intensityMin, filter.intensityMax]}
-          min={1}
-          max={5}
-          step={1}
-          onValueChange={([min, max]) =>
-            onChange({ ...filter, intensityMin: min, intensityMax: max })
-          }
-        />
-      </div>
-
-      {tagOptions.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">
-            Tags{" "}
-            <span className="text-muted-foreground font-normal text-xs">
-              (any match)
-            </span>
-          </p>
+          <p className="text-sm font-medium">Emotion</p>
           <div className="flex flex-wrap gap-1.5">
-            {tagOptions.map((tag) => (
-              <Badge
-                key={tag.slug}
-                variant={
-                  filter.tagSlugs.has(tag.slug) ? "default" : "outline"
-                }
-                className="cursor-pointer select-none"
-                onClick={() => toggleTag(tag.slug)}
+            {(EMOTIONS as Emotion[]).map((emotion) => (
+              <Button
+                key={emotion}
+                size="sm"
+                variant={filter.emotions.has(emotion) ? "default" : "outline"}
+                className="h-7 text-xs"
+                style={{
+                  borderColor: EMOTION_META[emotion].color,
+                  ...(filter.emotions.has(emotion) && {
+                    backgroundColor: EMOTION_META[emotion].color,
+                    color: "white",
+                  }),
+                }}
+                onClick={() => toggleEmotion(emotion)}
               >
-                {tag.label}
-              </Badge>
+                {EMOTION_META[emotion].label}
+              </Button>
             ))}
           </div>
         </div>
-      )}
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium flex justify-between">
+            <span>Intensity</span>
+            <span className="text-muted-foreground font-normal">
+              {filter.intensityMin === filter.intensityMax
+                ? filter.intensityMin
+                : `${filter.intensityMin} – ${filter.intensityMax}`}
+            </span>
+          </p>
+          <Slider
+            value={[filter.intensityMin, filter.intensityMax]}
+            min={1}
+            max={5}
+            step={1}
+            onValueChange={([min, max]) =>
+              onChange({ ...filter, intensityMin: min, intensityMax: max })
+            }
+          />
+        </div>
+
+        {tagOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Tags{" "}
+              <span className="text-muted-foreground font-normal text-xs">
+                (any match)
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {tagOptions.map((tag) => (
+                <Badge
+                  key={tag.slug}
+                  variant={
+                    filter.tagSlugs.has(tag.slug) ? "default" : "outline"
+                  }
+                  className="cursor-pointer select-none"
+                  onClick={() => toggleTag(tag.slug)}
+                >
+                  {tag.label}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {isFiltered && (

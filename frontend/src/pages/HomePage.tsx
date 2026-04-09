@@ -20,7 +20,8 @@ import CampusMap from "@/components/map/CampusMap";
 import { SubmissionDetail } from "@/components/sidebar/SubmissionDetail";
 import { SubmissionForm } from "@/components/sidebar/SubmissionForm";
 
-import { ViewToggle } from "@/components/sidebar/ViewToggle";
+import { ViewToggle, type ViewMode } from "@/components/sidebar/ViewToggle";
+import { IntroPanel } from "@/components/sidebar/IntroPanel";
 import {
   HeatmapControls,
   defaultHeatmapConfig,
@@ -32,8 +33,6 @@ import {
   type PinsFilterState,
 } from "@/components/sidebar/PinsFilter";
 import { SidebarDrawer } from "@/components/sidebar/SidebarDrawer";
-
-type ViewMode = "pins" | "heatmap";
 
 type DraftMarker = {
   lat: number;
@@ -56,7 +55,8 @@ const defaultFormState: SubmissionFormState = {
 
 function HomePage() {
   // MAP AND VIEWING STATES
-  const [viewMode, setViewMode] = useState<ViewMode>("pins");
+  const [viewMode, setViewMode] = useState<ViewMode>("guide");
+  const mapMode = viewMode === "heatmap" ? "heatmap" : "pins";
   const [activeHeatmapEmotions, setActiveHeatmapEmotions] = useState<
     Set<Emotion>
   >(new Set(EMOTIONS as Emotion[])); // Which emotions to show on heatmap
@@ -235,9 +235,9 @@ function HomePage() {
               center={center}
               draftMarker={draftMarker}
               submissions={
-                viewMode === "pins" ? filteredSubmissions : submissions
+                mapMode === "pins" ? filteredSubmissions : submissions
               }
-              viewMode={viewMode}
+              viewMode={mapMode}
               activeEmotions={activeHeatmapEmotions}
               heatmapConfig={heatmapConfig}
               onMapClick={(latlng) => {
@@ -255,9 +255,11 @@ function HomePage() {
 
       <aside className="w-full p-8 h-[calc(100vh-4rem)] flex flex-col">
         <div className="flex flex-col gap-4 h-full overflow-hidden">
-          <ViewToggle onChange={setViewMode} />
+          <ViewToggle value={viewMode} onChange={setViewMode} />
 
-          {viewMode === "heatmap" ? (
+          {viewMode === "guide" ? (
+            <IntroPanel />
+          ) : viewMode === "heatmap" ? (
             <SidebarDrawer title="Heatmap Controls" defaultOpen={true}>
               <HeatmapControls
                 activeEmotions={activeHeatmapEmotions}

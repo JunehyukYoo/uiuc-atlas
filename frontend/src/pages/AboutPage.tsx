@@ -8,7 +8,7 @@ function AboutPage() {
         <p className="text-muted-foreground text-base leading-relaxed">
           UIUC Atlas is a capstone project that creates an interactive emotional
           map of the University of Illinois Urbana-Champaign campus. It invites
-          students to record how they feel in specific places — and to see, in
+          students to record how they feel in specific places and to see, in
           aggregate, how those feelings pattern across the spaces we all share.
         </p>
       </div>
@@ -26,8 +26,9 @@ function AboutPage() {
         </p>
         <p className="text-muted-foreground leading-relaxed">
           Rather than starting from assumptions about what students need, this
-          project surfaces patterns from the ground up — through the emotional
-          responses of the people who actually inhabit these spaces every day.
+          project surfaces patterns from the ground up, and through the
+          emotional responses of the people who actually inhabit these spaces
+          every day.
         </p>
       </div>
 
@@ -35,9 +36,9 @@ function AboutPage() {
         <h2 className="text-xl font-semibold">How It Works</h2>
         <p className="text-muted-foreground leading-relaxed">
           To make a submission, click anywhere on the map to drop a pin. You'll
-          be asked to select an emotion from one of six categories — Happy, Sad,
-          Calm, Anxious, Excited, or Angry — and rate its intensity on a scale
-          of 1 to 5. You can optionally add a short reflection (up to 280
+          be asked to select an emotion from one of six categories (Happy, Sad,
+          Calm, Anxious, Excited, or Angry) and rate its intensity on a scale of
+          1 to 5. You can optionally add a short reflection (up to 280
           characters) and one or more tags that describe your identity or
           context.
         </p>
@@ -48,8 +49,8 @@ function AboutPage() {
           can filter by emotion, intensity range, and tags to explore specific
           subsets of the data. In{" "}
           <span className="text-foreground font-medium">Heatmap</span> mode,
-          submissions are aggregated into color-coded density layers — one per
-          emotion — that reveal where feelings cluster across campus.
+          submissions are aggregated into color-coded density layers (one per
+          emotion) that reveal where feelings cluster across campus.
         </p>
       </div>
 
@@ -58,16 +59,16 @@ function AboutPage() {
         <p className="text-muted-foreground leading-relaxed">
           UIUC Atlas was developed using a Human-Centered Design methodology.
           The goal is not to produce a definitive account of campus experience,
-          but to create a tool that opens a conversation — between students,
-          administrators, and designers — about how emotional experience of
-          space can inform the way those spaces are maintained, modified, or
+          but to create a tool that opens a conversation between students,
+          administrators, and designers about how emotional experience of space
+          can inform the way those spaces are maintained, modified, or
           reimagined.
         </p>
         <p className="text-muted-foreground leading-relaxed">
           Patterns that emerge from the map are meant to surface questions, not
           prescribe answers. A cluster of anxiety near a building might reflect
           academic pressure, social dynamics, physical design, or something else
-          entirely. The data alone doesn't tell us — but it gives us a place to
+          entirely. The data alone doesn't tell us, but it gives us a place to
           start asking.
         </p>
       </div>
