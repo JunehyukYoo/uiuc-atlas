@@ -243,10 +243,12 @@ function HomePage() {
               onMapClick={(latlng) => {
                 setDraftMarker({ lat: latlng[0], lng: latlng[1] });
                 setSelectedSubmission(null);
+                if (viewMode === "guide") setViewMode("pins");
               }}
               onSubmissionClick={(submission) => {
                 setSelectedSubmission(submission);
                 setDraftMarker(null);
+                if (viewMode === "guide") setViewMode("pins");
               }}
             />
           )}
